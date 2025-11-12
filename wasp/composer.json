@@ -1,0 +1,18 @@
+{
+    "name": "billy/wasp",
+    "autoload": {
+        "psr-4": {
+            "Billy\\Wasp\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "billygl",
+            "email": "billy.grados@gmail.com"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6",
+        "guzzlehttp/guzzle": "^7.10"
+    }
+}
