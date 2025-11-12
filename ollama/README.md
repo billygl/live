@@ -1,0 +1,3 @@
+````
+ollama run deepseek-v3.1:671b-cloud
+````
