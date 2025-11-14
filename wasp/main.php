@@ -6,6 +6,12 @@ $dotenv->load();
 
 $verifyToken = $_ENV['WHATSAPP_VERIFY_TOKEN'];
 
+$client = OpenAI::factory()
+    ->withHttpClient($httpClient = new \GuzzleHttp\Client(['timeout' => 30, 'verify' => false]))
+    ->withApiKey($_ENV['GEMINI_API_KEY'])
+    ->withBaseUri('https://generativelanguage.googleapis.com/v1beta')
+    ->make();
+  
 function newPayload($to, $type, $content){
     return [
         'messaging_product' => 'whatsapp',
@@ -57,6 +63,16 @@ function initMessage(){
     $payload = newPayload($to, $type, $content);
     sendPayload($payload);
 }
+function answerLLM($client, $prompt){
+    $response = $client->chat()->create([
+        'model' => 'gemini-2.5-flash-lite', // Use a compatible Gemini/Gemma model
+        'messages' => [
+            ['role' => 'system', 'content' => 'You are a helpful assistant.'],
+            ['role' => 'user', 'content' => $prompt],
+        ],
+    ]);
+    return $response->choices[0]->message->content;
+}
 
 // --- Lógica del Webhook ---
 $uri = $_SERVER['REQUEST_URI'];
@@ -99,15 +115,20 @@ if ($requestMethod === 'GET') {
         return;
     }
     $type = 'text';
+    
+    $text = $data['text']['body'] ?? '-';
+    
     $content = [
-        'body' => $data['text']['body'] ?? '-'
+        'body' => answerLLM($client, $text)
     ];
     $payload = newPayload($to, $type, $content);
-    @file_put_contents($logFile, $to."-".$content, FILE_APPEND | LOCK_EX);
     sendPayload($payload);
-    @file_put_contents($logFile, "sent", FILE_APPEND | LOCK_EX);
 } else {
     // Método no soportado
     http_response_code(405);
     header('Allow: GET, POST');
 }
+
+
+//print_r(answerLLM($client, "Hola, ¿cómo estás?"));
+//die(0);
